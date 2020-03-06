@@ -174,6 +174,7 @@ define([
                         const ratio = rw / pw;
                         panels.relativeSizes([ratio, 1 - ratio]);
                     });
+
                     function transformNode(node, pathStr = "") {
                         const _node = {};
                         _node.label = node["$"] && node["$"].name ? node["$"].name : "";
@@ -200,6 +201,50 @@ define([
                             }
                         } else {
                             if(node.name){
+                                return {
+                                    label: node.name,
+                                    content: JSON.stringify(node, undefined, 4)
+                                }
+                            }
+                            return false;
+                        }
+                        return _node;
+                    }
+                    function transformNode2(node, pathStr = "") {
+                        const _node = {};
+                        const hasName = node.name;
+                        const hasMoneyName = node["$"] && node["$"].name;
+                        const childrenUndefined = typeof node._children === "undefined";
+                        _node.label = hasMoneyName ? node["$"].name : "";
+
+                        const pathPrefix = pathStr.length > 0 ? pathStr+"." : "";
+                        const pathToNode = `${pathPrefix}.${_node.label}`;
+                        
+                        if (!hasMoneyName && hasName) {
+                            _node.label = node.name;
+                        }
+
+                        if (!childrenUndefined) {
+                            if (node._children.length === 1 && node._children[0].name === "Text") {
+                                _node.content = node._children[0].content;
+                                if (pathToNode === pathToQuery) {
+                                    _node.bold = true;
+                                }
+                            } else {
+                                _node.children = node._children.map(n => {
+                                        return transformNode(n, pathToNode);
+                                    })
+                                    .filter(n => n)
+                                    ;
+                            }
+                        } else if (typeof node.content === "string" && node.content.trim()) {
+                            // _children undefined but content is a non-empty string
+                            _node.content = node.content;
+                            if (pathToNode === pathToQuery) {
+                                _node.bold = true;
+                            }
+                        } else {
+                            if(node.name && node.name !== "Query"){
                                 return {
                                     label: node.name,
                                     content: JSON.stringify(node, undefined, 4)
