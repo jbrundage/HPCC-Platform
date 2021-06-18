@@ -64,6 +64,34 @@ const routes: Routes = [
             { path: "/:Wuid", action: (ctx, params) => import("./components/WorkunitDetails").then(_ => <_.WorkunitDetails wuid={params.Wuid as string} />) }
         ]
     },
+    {
+        path: "/workunits",
+        children: [
+            { path: "", action: (ctx) => import("./components/Workunits").then(_ => <_.Workunits filter={parseSearch(ctx.search) as any} />) },
+            { path: "/dashboard", action: (ctx) => import("./components/WorkunitsDashboard").then(_ => <_.WorkunitsDashboard filterProps={parseSearch(ctx.search) as any} />) },
+            { path: "/legacy", action: () => import("./layouts/DojoAdapter").then(_ => <_.DojoAdapter widgetClassID="WUQueryWidget" />) },
+            { path: "/:Wuid/:Tab", action: (ctx, params) => import("./components/WorkunitDetails").then(_ => <_.WorkunitDetails wuid={params.Wuid as string} tab={params.Tab as string} />) },
+            { path: "/:Wuid/outputs/:Name", action: (ctx, params) => import("./layouts/DojoAdapter").then(_ => <_.DojoAdapter widgetClassID="ResultWidget" params={params} />) },
+            { path: "/:Wuid", action: (ctx, params) => import("./components/WorkunitDetails").then(_ => <_.WorkunitDetails wuid={params.Wuid as string} />) }
+        ]
+    },
+    {
+        path: "/dp",
+        children: [
+            { path: "", action: (context) => import("./components/Files").then(_ => <_.Files filter={parseSearch(context.search) as any} />) },
+            { path: "/:Wuid", action: (ctx, params) => import("./components/DataPatternsReport").then(_ => <_.DataPatternsReport Wuid={params.Wuid as string} />) }
+        ]
+    },
+    {
+        path: "/dpl",
+        children: [
+            { path: "", action: (context) => import("./components/Files").then(_ => <_.Files filter={parseSearch(context.search) as any} />) },
+            { path: "/legacy", action: () => import("./layouts/DojoAdapter").then(_ => <_.DojoAdapter widgetClassID="DFUQueryWidget" />) },
+
+            // needs LogicalName and NodeGroup?
+            { path: "/:Wuid", action: (ctx, params) => import("./layouts/DojoAdapter").then(_ => <_.DojoAdapter widgetClassID="DataPatternsWidget" params={params} />) }
+        ]
+    },
     { path: "/play", action: () => import("./layouts/DojoAdapter").then(_ => <_.DojoAdapter widgetClassID="ECLPlaygroundWidget" />) },
     { path: "/playground", action: () => import("./layouts/DojoAdapter").then(_ => <_.DojoAdapter widgetClassID="ECLPlaygroundWidget" />) },
     //  Files  ---

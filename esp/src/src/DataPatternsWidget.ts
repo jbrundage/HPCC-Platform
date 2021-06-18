@@ -162,6 +162,7 @@ export class DataPatternsWidget {
     }
 
     init(params) {
+        console.log("params", params);
         if (this.inherited(arguments))
             return;
 
