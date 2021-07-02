@@ -13,7 +13,7 @@ interface DataPatternsReportProps {
     Wuid: string;
 }
 
-interface NAWidgetProps {
+interface NAStackTableProps {
     label: string;
     value: string;
 }
@@ -21,18 +21,21 @@ interface NAWidgetProps {
 const labelStyles = {
     root: {
         height: FontSizes.medium,
+        fontSize: FontSizes.small,
+        lineHeight: FontSizes.small,
         fontWeight: FontWeights.bold
     }
 };
 
-export const NAWidget: React.FunctionComponent<NAWidgetProps> = ({
+export const NAStackTable: React.FunctionComponent<NAStackTableProps> = ({
     label,
     value
 }) => {
     return <StackTable
+        label={label}
         labelStyles={labelStyles}
         data={[
-            [label, value],
+            [value, ""],
         ]}
     />;
 };
@@ -45,7 +48,6 @@ export const DataPatternsReport: React.FunctionComponent<DataPatternsReportProps
     const [results] = wuResults;
 
     const [data, setData] = React.useState([]);
-    // const [showType, setShowType] = React.useState("standard");
     const [hideStrings, setHideStrings] = React.useState(false);
     const [hideNumbers, setHideNumbers] = React.useState(false);
     const [sortBy, setSortBy] = React.useState("default");
@@ -56,6 +58,9 @@ export const DataPatternsReport: React.FunctionComponent<DataPatternsReportProps
                 resp.forEach((n, i)=>{
                     n.originalIndex = i;
                     n.typeCategory = n.given_attribute_type.toLowerCase().includes("string") ? 1 : 0;
+                    if(n.is_numeric) {
+                        n.typeCategory = 0;
+                    }
                 });
                 setData(resp);
             });
@@ -64,40 +69,69 @@ export const DataPatternsReport: React.FunctionComponent<DataPatternsReportProps
         }
     }, [results]);
 
-    console.log("data === ", data);
     const stackParams = {};
-    console.log("sortBy === ", sortBy);
-    
     data.sort((a, b)=>{
         switch(sortBy){
             case "default":
                 return a.originalIndex - b.originalIndex;
-            case "type_asc":
-                if(a.typeCategory === b.typeCategory) {
-                    return a.originalIndex - b.originalIndex;
+            case "cardinality_asc":
+                if(a.cardinality === b.cardinality) {
+                    return a.cardinality - b.cardinality;
                 }
-                return a.typeCategory - b.typeCategory;
-            case "type_desc":
-                if(a.typeCategory === b.typeCategory) {
-                    return a.originalIndex - b.originalIndex;
+                return a.cardinality - b.cardinality;
+            case "cardinality_desc":
+                if(a.cardinality === b.cardinality) {
+                    return a.cardinality - b.cardinality;
                 }
-                return b.typeCategory - a.typeCategory;
+                return b.cardinality - a.cardinality;
         }
     });
 
     const items = data
-        // .filter(item => {
-        //     switch (showType) {
-        //         case "numeric_list":
-        //             return item.is_numeric;
-        //     }
-        //     return true;
-        // })
+        .filter(item=>{
+            const isLegitAsNumber = item.is_numeric || !hideStrings;
+            const isLegitAsString = !item.is_numeric || !hideNumbers;
+            return isLegitAsNumber && isLegitAsString;
+        })
         .map((item, rowIdx) => {
             let col1Content;
             let col2Widget;
             let col3Widget;
             let col4Widget;
+
+            const col0Styles = {
+                root: {
+                    width: "20%",
+                    marginRight: "2%",
+                    marginLeft: "2%",
+                },
+            };
+            const col1Styles = {
+                root: {
+                    width: "14%",
+                    marginRight: "2%",
+                },
+            };
+            const col2Styles = {
+                root: {
+                    width: "20%",
+                    minWidth: "auto",
+                    marginRight: "2%",
+                },
+            };
+            const col3Styles = {
+                root: {
+                    width: "18%",
+                    marginRight: "2%",
+                },
+            };
+            const col4Styles = {
+                root: {
+                    width: "16%",
+                    minWidth: "200px",
+                    marginRight: "2%",
+                },
+            };
 
             let bestType = item.best_attribute_type;
             if (bestType !== item.given_attribute_type) {
@@ -156,7 +190,7 @@ export const DataPatternsReport: React.FunctionComponent<DataPatternsReportProps
                     data={
                         [
                             ["Mean", item.min_length],
-                            ["Std. Deviation", item.ave_length],
+                            ["Std. Dv", item.ave_length],
                             ["Min", item.numeric_min],
                             ["25%", item.numeric_lower_quartile],
                             ["50%", item.numeric_median],
@@ -187,6 +221,7 @@ export const DataPatternsReport: React.FunctionComponent<DataPatternsReportProps
                             root: {
                                 flex: 1,
                                 overflow: "hidden",
+                                fontSize: FontSizes.small,
                                 height: 19
                             }
                         }
@@ -200,7 +235,21 @@ export const DataPatternsReport: React.FunctionComponent<DataPatternsReportProps
                         ]
                     }
                 />;
-                col2Widget = <NAWidget label="" value="N/A" />;
+                if(item.rare_patterns && item.rare_patterns.Row.length) {
+                    col2Widget = <BreakdownTable
+                        label="Rare Patterns"
+                        data={item.rare_patterns.Row.map(n => {
+                            return [
+                                n.data_pattern.trim(), n.rec_count
+                            ];
+                        })}
+                        rowCount={7}
+                        usePercentage={true}
+                    />;
+                    col2Styles.root.minWidth = "200px";
+                } else {
+                    col2Widget = <NAStackTable label="Rare Patterns" value="N/A" />;
+                }
             }
             if (item.popular_patterns.Row.length > 0) {
                 col4Widget = <BreakdownTable
@@ -214,7 +263,7 @@ export const DataPatternsReport: React.FunctionComponent<DataPatternsReportProps
                     usePercentage={true}
                 />;
             } else {
-                col4Widget = <NAWidget label="Popular Patterns" value="N/A" />;
+                col4Widget = <NAStackTable label="Popular Patterns" value="N/A" />;
             }
 
             if (item.cardinality_breakdown.Row.length > 0) {
@@ -229,54 +278,22 @@ export const DataPatternsReport: React.FunctionComponent<DataPatternsReportProps
                     usePercentage={true}
                 />;
             } else {
-                col3Widget = <NAWidget label="Cardinality" value="N/A" />;
+                col3Widget = <NAStackTable label="Cardinality" value="N/A" />;
             }
 
             const evenRowStackStyles = {
                 root: {
-                    marginBottom: 12,
+                    paddingTop: 12,
                     paddingBottom: 12,
                 },
             };
             const oddRowStackStyles = {
                 root: {
                     backgroundColor: "#cccccc",
-                    marginBottom: 12,
+                    paddingTop: 12,
                     paddingBottom: 12,
                 },
             };
-            const col0Styles = {
-                root: {
-                    width: "20%",
-                    marginRight: "2%",
-                    marginLeft: "2%",
-                },
-            };
-            const col1Styles = {
-                root: {
-                    width: "14%",
-                    marginRight: "2%",
-                },
-            };
-            const col2Styles = {
-                root: {
-                    width: "20%",
-                    marginRight: "2%",
-                },
-            };
-            const col3Styles = {
-                root: {
-                    width: "18%",
-                    marginRight: "2%",
-                },
-            };
-            const col4Styles = {
-                root: {
-                    width: "16%",
-                    marginRight: "2%",
-                },
-            };
-
             return <Stack key={`row-stack-${rowIdx}`} horizontal styles={rowIdx % 2 ? oddRowStackStyles : evenRowStackStyles}>
                 <Stack.Item key="stack-item-0" styles={col0Styles}>
                     {col0Content}
@@ -295,15 +312,6 @@ export const DataPatternsReport: React.FunctionComponent<DataPatternsReportProps
                 </Stack.Item>
             </Stack>;
         });
-    // return <Stack
-    //     {...stackParams}
-    // >
-    //     {items}
-    // </Stack>;
-    // const options = [
-    //     { key: "standard", text: "Standard", iconProps: { iconName: "ShowResults" }, onClick: () => { setShowType("standard"); } },
-    //     { key: "numeric_list", text: "Numeric", iconProps: { iconName: "AllApps" }, onClick: () => { setShowType("numeric_list"); } },
-    // ];
     const buttons: ICommandBarItemProps[] = [
         {
             key: "toggleStrings", text: "Show/Hide Strings", iconProps: { iconName: "Filter" },
@@ -326,19 +334,24 @@ export const DataPatternsReport: React.FunctionComponent<DataPatternsReportProps
             subMenuProps: {
                 items: [
                     {
-                        key: "Cardinality DESC",
-                        text: "Cardinality DESC",
-                        // iconProps: { iconName: "Mail" },
+                        key: "default",
+                        text: "Default",
                         onClick: () => {
-                            setSortBy("Cardinality DESC");
+                            setSortBy("default");
                         }
                     },
                     {
-                        key: "Cardinality ASC",
-                        text: "Cardinality ASC",
-                        // iconProps: { iconName: "Mail" },
+                        key: "cardinality_desc",
+                        text: "Cardinality DESC",
                         onClick: () => {
-                            setSortBy("Cardinality ASC");
+                            setSortBy("cardinality_desc");
+                        }
+                    },
+                    {
+                        key: "cardinality_asc",
+                        text: "Cardinality ASC",
+                        onClick: () => {
+                            setSortBy("cardinality_asc");
                         }
                     },
                 ],
@@ -348,19 +361,9 @@ export const DataPatternsReport: React.FunctionComponent<DataPatternsReportProps
     return <HolyGrail
         header={
             <Stack>
-                {/* <Stack.Item>
-                    <ChoiceGroup
-                        defaultSelectedKey="standard"
-                        options={options}
-                        onChange={(ev, opt) => {
-                            setShowType(opt.key);
-                        }}
-                    />
-                </Stack.Item> */}
                 <Stack.Item>
                     <CommandBar
                         items={buttons}
-                        // overflowButtonProps={{}}
                         farItems={rightButtons}
                     />
                 </Stack.Item>

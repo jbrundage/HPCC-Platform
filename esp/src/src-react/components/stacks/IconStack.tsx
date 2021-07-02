@@ -1,12 +1,12 @@
 import * as React from "react";
 
 import { mergeStyles, IStackStyles, FontIcon, Stack, FontSizes, Label, DefaultPalette } from "@fluentui/react";
-import { ICellObject, StackTable } from "../visualizations/StackTable";
+import { StackTable } from "../visualizations/StackTable";
 
 interface IconStackProps {
     label?: string;
     iconName: string;
-    data?: [string | number | ICellObject, string | number | ICellObject][];
+    data?: [string | number | any, string | number | any][];
     labelStyles?: IStackStyles;
     valueStyles?: IStackStyles;
 }

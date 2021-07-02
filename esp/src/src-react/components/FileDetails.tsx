@@ -9,6 +9,7 @@ import { pivotItemStyle } from "../layouts/pivot";
 import { pushUrl } from "../util/history";
 import { ShortVerticalDivider } from "./Common";
 import { TableGroup } from "./forms/Groups";
+import { DataPatternsReport } from "./DataPatternsReport";
 
 import "react-reflex/styles.css";
 
@@ -140,6 +141,9 @@ export const FileDetails: React.FunctionComponent<FileDetailsProps> = ({
             <PivotItem headerText={nlsHPCC.Contents} itemKey="Contents" style={pivotItemStyle(size, 0)}>
             </PivotItem>
             <PivotItem headerText={nlsHPCC.DataPatterns} itemKey="DataPatterns" style={pivotItemStyle(size, 0)}>
+                <ScrollablePane scrollbarVisibility={ScrollbarVisibility.auto}>
+                    <DataPatternsReport Wuid="W20210702-130500"/>
+                </ScrollablePane>
             </PivotItem>
             <PivotItem headerText={nlsHPCC.ECL} itemKey="ECL" style={pivotItemStyle(size, 0)}>
             </PivotItem>

@@ -116,12 +116,12 @@ export const QuartileStats: React.FunctionComponent<VizProps> = ({
             ;
     }
 
-    const candleX = bellChart.dataPos(quartiles[0]);
+    const candleX = bellChart.dataPos(quartiles[0]) + 2;
     const candleW = bellChart.dataPos(quartiles[4]) - candleX;
-
+    
     candleChart
         .pos({ x: candleX + candleW / 2, y: CANDLE_HEIGHT / 2 })
-        .width(candleW)
+        .width(Math.max(candleW, 1))
         .data(quartiles)
         ;
 
@@ -141,13 +141,15 @@ export const QuartileStats: React.FunctionComponent<VizProps> = ({
     const bellStackStyles: IStackStyles = {
         root: {
             height: bellHeight,
-            width: isHorizontal ? 200 : "auto"
+            width: 200
         },
     };
     const candlestickStackStyles: IStackStyles = {
         root: {
             height: candlestickHeight,
-            width: isHorizontal ? 200 : "auto"
+            width: Math.max(200 - (candleX * 2), 30),
+            marginLeft: candleX,
+            marginRight: candleX
         },
     };
 
